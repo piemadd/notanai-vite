@@ -8,7 +8,7 @@ const App = () => {
   const [cfToken, setCFToken] = useState("");
   const turnstileRef = useRef(null);
 
-  const { sendJsonMessage } = useWebSocket("ws://localhost:3001", {
+  const { sendJsonMessage } = useWebSocket("ws://api.notanai.co", {
     onOpen: () => {
       console.log("opened");
       setMessages([]);
@@ -72,6 +72,13 @@ const App = () => {
               }}
             >
               "Isn't this a bit dehumanizing?"
+            </p>
+            <p
+              onClick={(e) => {
+                setTextBox(e.target.innerText.replaceAll('"', ""));
+              }}
+            >
+              "She Ashland on my Avenue till I Irving Park Road"
             </p>
           </section>
         )}
