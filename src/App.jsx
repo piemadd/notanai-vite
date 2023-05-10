@@ -17,10 +17,7 @@ const App = () => {
       const messageContent = JSON.parse(e.data);
       console.log("message received:", messageContent);
 
-      setMessages((prev) => [
-        ...prev,
-        { type: "ai", content: messageContent.data },
-      ]);
+      setMessages((prev) => [...prev, { type: "ai", content: messageContent }]);
     },
     shouldReconnect: (closeEvent) => true,
   });
@@ -31,7 +28,16 @@ const App = () => {
   };
 
   const handleMessage = (message) => {
-    setMessages((prev) => [...prev, { type: "user", content: message }]);
+    setMessages((prev) => [
+      ...prev,
+      {
+        type: "user",
+        content: {
+          type: "message",
+          data: message,
+        },
+      },
+    ]);
     sendJsonMessage({
       content: message,
       token: cfToken,
@@ -85,14 +91,35 @@ const App = () => {
 
         <section className='conversation'>
           {messages.map((message, i) => {
-            return (
-              <p
-                key={i}
-                className={`message ${message.type === "ai" ? "ai" : "user"}`}
-              >
-                {message.content}
-              </p>
-            );
+            if (message.content?.type === "error") {
+              return (
+                <p
+                  key={i}
+                  className={`message error ${
+                    message.type === "ai" ? "ai" : "user"
+                  }`}
+                >
+                  {message.content?.data}
+                </p>
+              );
+            } else if (message.content?.type === "message") {
+              return (
+                <p
+                  key={i}
+                  className={`message ${message.type === "ai" ? "ai" : "user"}`}
+                >
+                  {message.content?.data}
+                </p>
+              );
+            } else if (message.content?.type === "attachment") {
+              return (
+                <img
+                  key={i}
+                  className={`message ${message.type === "ai" ? "ai" : "user"}`}
+                  src={message.content?.data}
+                />
+              );
+            }
           })}
         </section>
         <section className='input'>

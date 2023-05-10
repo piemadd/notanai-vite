@@ -84,12 +84,6 @@ p {
   background-color: #444654;
 }
 
-.conversation > p {
-  width: 100%;
-  background-color: #3e3f4b;
-  border-bottom: #fff 1px solid;
-}
-
 .input {
   display: flex;
   flex-direction: row;
@@ -132,6 +126,10 @@ p {
   flex-direction: column;
   width: calc(100% - 32px);
   max-width: 800px;
+}
+
+.error {
+  text-color: #ff0000;
 }
 
 .conversation .message {
