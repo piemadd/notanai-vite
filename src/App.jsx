@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect, useMemo } from "react";
+import { useState, useRef } from "react";
 import { Turnstile } from "@marsidev/react-turnstile";
 import useWebSocket from "react-use-websocket";
 
@@ -6,6 +6,7 @@ const App = () => {
   const [messages, setMessages] = useState([]);
   const [textBox, setTextBox] = useState("");
   const [cfToken, setCFToken] = useState("");
+  const [showPopup, setShowPopup] = useState(true);
   const turnstileRef = useRef(null);
 
   const { sendJsonMessage } = useWebSocket("wss://api.notanai.co", {
@@ -51,10 +52,17 @@ const App = () => {
     <>
       <section className='title'>
         <h1>Not an AI</h1>
-        <p>
-          Built by <a href='https://piemadd.com/'>Piero</a> in Chicago
-        </p>
       </section>
+      {showPopup && (
+        <div id='popup'>
+          <h2>PLEASE READ!</h2>
+          <p>
+            Language on this site may not be suitable for those under the age of 18. If you are under the age of 18, please leave this site.
+          </p>
+          <button onClick={() => setShowPopup(false)}>I am 18</button>
+        </div>
+      )}
+
       <main>
         {messages.length === 0 && (
           <section className='examples'>
@@ -153,7 +161,12 @@ const App = () => {
         />
       </main>
       <footer>
-        <a href='/privacy.txt'>Privacy Policy</a>
+        <p>
+          <a href='/privacy.html'>Privacy Policy</a>
+        </p>
+        <p>
+          Built by <a href='https://piemadd.com/'>Piero</a> in Chicago
+        </p>
       </footer>
     </>
   );
