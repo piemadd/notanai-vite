@@ -8,7 +8,7 @@ const App = () => {
   const [cfToken, setCFToken] = useState("");
   const turnstileRef = useRef(null);
 
-  const { sendJsonMessage } = useWebSocket("ws://api.notanai.co", {
+  const { sendJsonMessage } = useWebSocket("wss://api.notanai.co", {
     onOpen: () => {
       console.log("opened");
       setMessages([]);
