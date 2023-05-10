@@ -57,9 +57,15 @@ const App = () => {
         <div id='popup'>
           <h2>PLEASE READ!</h2>
           <p>
-            Language on this site may not be suitable for those under the age of 18. If you are under the age of 18, please leave this site.
+            Language on this site may not be suitable for those under the age of
+            18. If you are under the age of 18, please leave this site.
+            Additionally, any interactions on this site are not endorsed by
+            Piero Maddaleni.
           </p>
-          <button onClick={() => setShowPopup(false)}>I am 18</button>
+          <p>
+            Remember, you are talking to <i>real people</i>. Don't be a dick.
+          </p>
+          <button onClick={() => setShowPopup(false)}>I am 18, LEMMMEEE INNNNN!</button>
         </div>
       )}
 
