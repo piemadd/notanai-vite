@@ -52,6 +52,7 @@ const App = () => {
     <>
       <section className='title'>
         <h1>Not an AI</h1>
+        <p>Have a funny interaction? Share it!</p>
       </section>
       {showPopup && (
         <div id='popup'>
@@ -173,7 +174,7 @@ const App = () => {
         <p>
           Built by <a href='https://piemadd.com/'>Piero</a> in Chicago
         </p>
-        <p>Not an AI v1.1.3</p>
+        <p>Not an AI v1.1.4</p>
       </footer>
     </>
   );
