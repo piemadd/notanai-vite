@@ -1,6 +1,7 @@
 import { useState, useRef } from "react";
 import { Turnstile } from "@marsidev/react-turnstile";
 import useWebSocket from "react-use-websocket";
+import ReactMarkdown from "react-markdown";
 
 const App = () => {
   const [messages, setMessages] = useState([]);
@@ -19,6 +20,46 @@ const App = () => {
       console.log("message received:", messageContent);
 
       setMessages((prev) => [...prev, { type: "ai", content: messageContent }]);
+
+      if (messageContent.type === "message") {
+        const possibleMedia = messageContent.data.match(/\bhttps?:\/\/\S+/gi);
+
+        if (possibleMedia) {
+          possibleMedia.forEach((media) => {
+            fetch(media, {
+              method: "HEAD",
+            })
+              .then((res) => {
+                if (res.headers.get("content-type").includes("image")) {
+                  setMessages((prev) => [
+                    ...prev,
+                    {
+                      type: "ai",
+                      content: {
+                        type: "image",
+                        data: media,
+                      },
+                    },
+                  ]);
+                } else if (res.headers.get("content-type").includes("video")) {
+                  setMessages((prev) => [
+                    ...prev,
+                    {
+                      type: "ai",
+                      content: {
+                        type: "video",
+                        data: media,
+                      },
+                    },
+                  ]);
+                }
+              })
+              .catch((err) => {
+                console.log(err);
+              });
+          });
+        }
+      }
     },
     shouldReconnect: (closeEvent) => true,
   });
@@ -29,6 +70,10 @@ const App = () => {
   };
 
   const handleMessage = (message) => {
+    if (message === "") {
+      return;
+    }
+
     setMessages((prev) => [
       ...prev,
       {
@@ -66,7 +111,9 @@ const App = () => {
           <p>
             Remember, you are talking to <i>real people</i>. Don't be a dick.
           </p>
-          <button onClick={() => setShowPopup(false)}>I am 18, LEMMMEEE INNNNN!</button>
+          <button onClick={() => setShowPopup(false)}>
+            I am 18, LEMMMEEE INNNNN!
+          </button>
         </div>
       )}
 
@@ -108,30 +155,82 @@ const App = () => {
           {messages.map((message, i) => {
             if (message.content?.type === "error") {
               return (
-                <p
+                <ReactMarkdown
                   key={i}
                   className={`message error ${
                     message.type === "ai" ? "ai" : "user"
                   }`}
                 >
                   {message.content?.data}
-                </p>
+                </ReactMarkdown>
               );
             } else if (message.content?.type === "message") {
               return (
-                <p
+                <ReactMarkdown
                   key={i}
                   className={`message ${message.type === "ai" ? "ai" : "user"}`}
                 >
                   {message.content?.data}
-                </p>
+                </ReactMarkdown>
               );
             } else if (message.content?.type === "attachment") {
+              if (
+                ["png", "jpg", "jpeg", "gif"].includes(
+                  message.content?.data.split(".").pop()
+                )
+              ) {
+                return (
+                  <img
+                    key={i}
+                    className={`message ${
+                      message.type === "ai" ? "ai" : "user"
+                    }`}
+                    src={message.content?.data}
+                  />
+                );
+              } else if (
+                ["mp4", "webm", "mov"].includes(
+                  message.content?.data.split(".").pop()
+                )
+              ) {
+                return (
+                  <video
+                    key={i}
+                    className={`message ${
+                      message.type === "ai" ? "ai" : "user"
+                    }`}
+                    src={message.content?.data}
+                    controls
+                  />
+                );
+              } else {
+                return (
+                  <a
+                    key={i}
+                    className={`message ${
+                      message.type === "ai" ? "ai" : "user"
+                    }`}
+                    href={message.content?.data}
+                  >
+                    {message.content?.data}
+                  </a>
+                );
+              }
+            } else if (message.content?.type === "image") {
               return (
                 <img
                   key={i}
                   className={`message ${message.type === "ai" ? "ai" : "user"}`}
                   src={message.content?.data}
+                />
+              );
+            } else if (message.content?.type === "video") {
+              return (
+                <video
+                  key={i}
+                  className={`message ${message.type === "ai" ? "ai" : "user"}`}
+                  src={message.content?.data}
+                  controls
                 />
               );
             }
@@ -174,7 +273,7 @@ const App = () => {
         <p>
           Built by <a href='https://piemadd.com/'>Piero</a> in Chicago
         </p>
-        <p>Not an AI v1.1.4</p>
+        <p>Not an AI v1.2.0</p>
       </footer>
     </>
   );
