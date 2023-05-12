@@ -9,6 +9,7 @@ const App = () => {
   const [initialConvo, setInitialConvo] = useState(null);
   const [textBox, setTextBox] = useState("");
   const [cfToken, setCFToken] = useState("");
+  const [error, setError] = useState(null);
   const [showPopup, setShowPopup] = useState(true);
   const turnstileRef = useRef(null);
 
@@ -45,12 +46,9 @@ const App = () => {
       const messageContent = JSON.parse(e.data);
       console.log("message received:", messageContent);
 
-      if (messageContent.type === "message") {
+      if (messageContent.type === "message" || messageContent.type === "error") {
         //adding message to state and saving to local storage
-
-        useEffect(() => {
-          gtag("event", "server_message");
-        });
+        gtag("event", "server_message");
 
         const prev = [...messages];
         localStorage.setItem(
@@ -159,8 +157,8 @@ const App = () => {
             creators of this site.
           </p>
           <p>
-            Remember, you are talking to <i>real people</i>, who happen to be
-            mostly zoomers. Don't be a dick, or they'll happily be dicks back.
+            Remember, you are talking to <i>real people</i>, who happen to
+            mostly be zoomers. Don't be a dick, or they'll happily be dicks back.
           </p>
           <button onClick={() => setShowPopup(false)}>
             I am 18, LEMMMEEE INNNNN!
@@ -239,10 +237,29 @@ const App = () => {
               } else return <option value={convoID}>{title}</option>;
             })}
           </select>
+          <button
+            onClick={() => {
+              localStorage.removeItem(currentConvo);
+              setPrevConversations((prev) => {
+                return prev.filter((convo) => convo !== currentConvo);
+              });
+              setCurrentConvo(initialConvo);
+              setMessages([]);
+              window.location.reload();
+
+              sendJsonMessage({
+                type: "message",
+                data: "Thread Deleted on Client Side, riperonis",
+              })
+            }}
+          >
+            Delete
+          </button>
         </section>
         <section className='conversation'>
           {messages.map((message, i) => {
             if (message.content?.type === "error") {
+              console.log("new error: ", message.content?.data);
               return (
                 <ReactMarkdown
                   key={i}
@@ -364,7 +381,7 @@ const App = () => {
         <p>
           Built by <a href='https://piemadd.com/'>Piero</a> in Chicago
         </p>
-        <p>Not an AI v1.3.3</p>
+        <p>Not an AI v1.3.4</p>
       </footer>
     </>
   );

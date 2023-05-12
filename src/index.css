@@ -84,6 +84,26 @@ p {
   background-color: #444654;
 }
 
+.convoSelector {
+  display: flex;
+  gap: 4px;
+}
+
+.convoSelector button {
+  background-color: #444654;
+  border: none;
+  border-bottom: #fff 1px solid;
+  padding: 8px 12px;
+  font-size: 1.2rem;
+  font-weight: 500;
+  color: var(--fg);
+  cursor: pointer;
+}
+
+.convoSelector button:hover {
+  background-color: #4e4e4e;
+}
+
 .convoSelector select {
   background-color: #3e3f4b;
   border: none;
