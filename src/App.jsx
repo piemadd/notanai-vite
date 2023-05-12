@@ -1,4 +1,4 @@
-import { useState, useRef, useMemo, useEffect } from "react";
+import { useState, useRef, useMemo } from "react";
 import { Turnstile } from "@marsidev/react-turnstile";
 import useWebSocket from "react-use-websocket";
 import ReactMarkdown from "react-markdown";
@@ -46,7 +46,10 @@ const App = () => {
       const messageContent = JSON.parse(e.data);
       console.log("message received:", messageContent);
 
-      if (messageContent.type === "message" || messageContent.type === "error") {
+      if (
+        messageContent.type === "message" ||
+        messageContent.type === "error"
+      ) {
         //adding message to state and saving to local storage
         gtag("event", "server_message");
 
@@ -83,7 +86,9 @@ const App = () => {
           localStorage.setItem(
             `conversation-${messageContent.data}`,
             JSON.stringify({
-              messages,
+              messages: messages.filter(
+                (message) => message.content?.type !== "error"
+              ),
               time: Date.now(),
             })
           );
@@ -104,6 +109,22 @@ const App = () => {
     }
 
     setMessages((prev) => {
+      localStorage.setItem(
+        currentConvo,
+        JSON.stringify({
+          messages: [
+            ...prev,
+            {
+              type: "user",
+              content: {
+                type: "message",
+                data: message,
+              },
+            },
+          ].filter((message) => message.content?.type !== "error"),
+          time: Date.now(),
+        })
+      );
       return [
         ...prev,
         {
@@ -120,9 +141,7 @@ const App = () => {
       token: cfToken,
     });
 
-    useEffect(() => {
-      gtag("event", "client_message");
-    }, []);
+    gtag("event", "client_message");
 
     turnstileRef.current?.reset();
     setCFToken("");
@@ -158,7 +177,8 @@ const App = () => {
           </p>
           <p>
             Remember, you are talking to <i>real people</i>, who happen to
-            mostly be zoomers. Don't be a dick, or they'll happily be dicks back.
+            mostly be zoomers. Don't be a dick, or they'll happily be dicks
+            back.
           </p>
           <button onClick={() => setShowPopup(false)}>
             I am 18, LEMMMEEE INNNNN!
@@ -215,7 +235,12 @@ const App = () => {
               if (convoID === initialConvo) {
                 localStorage.setItem(
                   convoID,
-                  JSON.stringify({ messages, time: Date.now() })
+                  JSON.stringify({
+                    messages: messages.filter(
+                      (message) => message.content?.type !== "error"
+                    ),
+                    time: Date.now(),
+                  })
                 );
                 convo = localStorage.getItem(convoID);
               }
@@ -251,7 +276,7 @@ const App = () => {
               sendJsonMessage({
                 type: "message",
                 data: "Thread Deleted on Client Side, riperonis",
-              })
+              });
             }}
           >
             Delete
