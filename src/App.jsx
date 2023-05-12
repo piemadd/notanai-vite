@@ -1,4 +1,4 @@
-import { useState, useRef, useMemo } from "react";
+import { useState, useRef, useMemo, useEffect } from "react";
 import { Turnstile } from "@marsidev/react-turnstile";
 import useWebSocket from "react-use-websocket";
 import ReactMarkdown from "react-markdown";
@@ -47,6 +47,11 @@ const App = () => {
 
       if (messageContent.type === "message") {
         //adding message to state and saving to local storage
+
+        useEffect(() => {
+          gtag("event", "server_message");
+        });
+
         const prev = [...messages];
         localStorage.setItem(
           currentConvo,
@@ -117,10 +122,26 @@ const App = () => {
       token: cfToken,
     });
 
+    useEffect(() => {
+      gtag("event", "client_message");
+    }, []);
+
     turnstileRef.current?.reset();
     setCFToken("");
     setTextBox("");
   };
+
+  const lastExample = useMemo(() => {
+    const examples = [
+      "She Ashland on my Avenue till I Irving Park Road",
+      "Why did my wife leave me?",
+      "What is the meaning of life?",
+      "What is a fortnite?",
+      "Thoughts on EMD?",
+    ];
+
+    return examples[Math.floor(Math.random() * examples.length)];
+  }, []);
 
   return (
     <>
@@ -133,16 +154,21 @@ const App = () => {
           <h2>PLEASE READ!</h2>
           <p>
             Language on this site may not be suitable for those under the age of
-            18. If you are under the age of 18, please leave this site.
-            Additionally, any interactions on this site are not endorsed by
-            Piero Maddaleni.
+            18. If you are under the age of 18, strongly consider leaving.
+            Additionally, any interactions on this site are not endorsed by the
+            creators of this site.
           </p>
           <p>
-            Remember, you are talking to <i>real people</i>. Don't be a dick.
+            Remember, you are talking to <i>real people</i>, who happen to be
+            mostly zoomers. Don't be a dick, or they'll happily be dicks back.
           </p>
           <button onClick={() => setShowPopup(false)}>
             I am 18, LEMMMEEE INNNNN!
           </button>
+          <br />
+          <p>
+            <a href='/privacy.html'>Privacy Policy</a>
+          </p>
         </div>
       )}
 
@@ -152,9 +178,7 @@ const App = () => {
             <p onClick={handleExampleClick}>"What is today's date?"</p>
             <p onClick={handleExampleClick}>"What is a good movie to watch?"</p>
             <p onClick={handleExampleClick}>"Isn't this a bit dehumanizing?"</p>
-            <p onClick={handleExampleClick}>
-              "She Ashland on my Avenue till I Irving Park Road"
-            </p>
+            <p onClick={handleExampleClick}>{lastExample}</p>
           </section>
         )}
 
@@ -340,7 +364,7 @@ const App = () => {
         <p>
           Built by <a href='https://piemadd.com/'>Piero</a> in Chicago
         </p>
-        <p>Not an AI v1.3.2</p>
+        <p>Not an AI v1.3.3</p>
       </footer>
     </>
   );
