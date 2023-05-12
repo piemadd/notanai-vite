@@ -340,7 +340,7 @@ const App = () => {
         <p>
           Built by <a href='https://piemadd.com/'>Piero</a> in Chicago
         </p>
-        <p>Not an AI v1.3.0</p>
+        <p>Not an AI v1.3.1</p>
       </footer>
     </>
   );
