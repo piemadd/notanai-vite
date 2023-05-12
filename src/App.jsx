@@ -1,14 +1,40 @@
-import { useState, useRef } from "react";
+import { useState, useRef, useMemo } from "react";
 import { Turnstile } from "@marsidev/react-turnstile";
 import useWebSocket from "react-use-websocket";
 import ReactMarkdown from "react-markdown";
 
 const App = () => {
   const [messages, setMessages] = useState([]);
+  const [currentConvo, setCurrentConvo] = useState(null);
+  const [initialConvo, setInitialConvo] = useState(null);
   const [textBox, setTextBox] = useState("");
   const [cfToken, setCFToken] = useState("");
   const [showPopup, setShowPopup] = useState(true);
   const turnstileRef = useRef(null);
+
+  const prevConversationsInit = Object.keys(localStorage).filter((key) => {
+    const content = localStorage.getItem(key);
+    if (!content) {
+      localStorage.removeItem(key);
+      return false;
+    }
+
+    const parsedContent = JSON.parse(content);
+    if (parsedContent.messages.length === 0 && key !== initialConvo) {
+      localStorage.removeItem(key);
+      return false;
+    }
+
+    return key.includes("conversation-");
+  });
+
+  const [prevConversations, setPrevConversations] = useState(
+    prevConversationsInit
+  );
+
+  const handleExampleClick = (e) => {
+    setTextBox(e.target.innerText.replaceAll('"', ""));
+  };
 
   const { sendJsonMessage } = useWebSocket("wss://api.notanai.co", {
     onOpen: () => {
@@ -19,45 +45,43 @@ const App = () => {
       const messageContent = JSON.parse(e.data);
       console.log("message received:", messageContent);
 
-      setMessages((prev) => [...prev, { type: "ai", content: messageContent }]);
-
       if (messageContent.type === "message") {
-        const possibleMedia = messageContent.data.match(/\bhttps?:\/\/\S+/gi);
+        //adding message to state and saving to local storage
+        const prev = [...messages];
+        localStorage.setItem(
+          currentConvo,
+          JSON.stringify({
+            messages: [...prev, { type: "ai", content: messageContent }],
+            time: Date.now(),
+          })
+        );
+        setMessages([...prev, { type: "ai", content: messageContent }]);
+      } else if (messageContent.type === "uuid") {
+        console.log("new uuid");
+        //saving the state of this conversation to local storage for later use
 
-        if (possibleMedia) {
-          possibleMedia.forEach((media) => {
-            fetch(media, {
-              method: "HEAD",
-            })
-              .then((res) => {
-                if (res.headers.get("content-type").includes("image")) {
-                  setMessages((prev) => [
-                    ...prev,
-                    {
-                      type: "ai",
-                      content: {
-                        type: "image",
-                        data: media,
-                      },
-                    },
-                  ]);
-                } else if (res.headers.get("content-type").includes("video")) {
-                  setMessages((prev) => [
-                    ...prev,
-                    {
-                      type: "ai",
-                      content: {
-                        type: "video",
-                        data: media,
-                      },
-                    },
-                  ]);
-                }
-              })
-              .catch((err) => {
-                console.log(err);
-              });
+        if (currentConvo !== null) {
+          console.log('current conversation is not null, telling server to fuck off')
+          sendJsonMessage({
+            type: "uuid",
+            data: currentConvo.split("-")[1],
           });
+        } else {
+          console.log(`new uuid conversation-${messageContent.data}`);
+
+          setPrevConversations((prev) => [
+            ...prev,
+            `conversation-${messageContent.data}`,
+          ]);
+          setCurrentConvo(`conversation-${messageContent.data}`);
+          setInitialConvo(`conversation-${messageContent.data}`);
+          localStorage.setItem(
+            `conversation-${messageContent.data}`,
+            JSON.stringify({
+              messages,
+              time: Date.now(),
+            })
+          );
         }
       }
     },
@@ -74,16 +98,18 @@ const App = () => {
       return;
     }
 
-    setMessages((prev) => [
-      ...prev,
-      {
-        type: "user",
-        content: {
-          type: "message",
-          data: message,
+    setMessages((prev) => {
+      return [
+        ...prev,
+        {
+          type: "user",
+          content: {
+            type: "message",
+            data: message,
+          },
         },
-      },
-    ]);
+      ];
+    });
     sendJsonMessage({
       content: message,
       token: cfToken,
@@ -120,37 +146,71 @@ const App = () => {
       <main>
         {messages.length === 0 && (
           <section className='examples'>
-            <p
-              onClick={(e) => {
-                setTextBox(e.target.innerText.replaceAll('"', ""));
-              }}
-            >
-              "What is today's date?"
-            </p>
-            <p
-              onClick={(e) => {
-                setTextBox(e.target.innerText.replaceAll('"', ""));
-              }}
-            >
-              "What is a good movie to watch?"
-            </p>
-            <p
-              onClick={(e) => {
-                setTextBox(e.target.innerText.replaceAll('"', ""));
-              }}
-            >
-              "Isn't this a bit dehumanizing?"
-            </p>
-            <p
-              onClick={(e) => {
-                setTextBox(e.target.innerText.replaceAll('"', ""));
-              }}
-            >
+            <p onClick={handleExampleClick}>"What is today's date?"</p>
+            <p onClick={handleExampleClick}>"What is a good movie to watch?"</p>
+            <p onClick={handleExampleClick}>"Isn't this a bit dehumanizing?"</p>
+            <p onClick={handleExampleClick}>
               "She Ashland on my Avenue till I Irving Park Road"
             </p>
           </section>
         )}
 
+        <section className='convoSelector'>
+          <select
+            onChange={(e) => {
+              const newConvoID = e.target.selectedOptions[0].value;
+              setCurrentConvo(newConvoID);
+              console.log("fetching previous messages");
+
+              if (localStorage.getItem(newConvoID)) {
+                console.log("previous messages found!");
+                console.log(localStorage.getItem(newConvoID));
+                const prevMessages = JSON.parse(
+                  localStorage.getItem(newConvoID)
+                ).messages;
+                console.log(prevMessages);
+                setMessages(prevMessages);
+
+                sendJsonMessage({
+                  type: "uuid",
+                  data: newConvoID.split("-")[1],
+                });
+              
+                //removing initial convo from list of previous convos
+                setPrevConversations((prev) => {
+                  return prev.filter((convo) => convo !== initialConvo);
+                });
+              
+              }
+            }}
+          >
+            {prevConversations.map((convoID) => {
+              let convo = localStorage.getItem(convoID);
+
+              if (convoID === initialConvo) {
+                localStorage.setItem(convoID, JSON.stringify({ messages, time: Date.now() }))
+                convo = localStorage.getItem(convoID);
+              }
+
+              if (!convo) {
+                console.log(convoID, initialConvo);
+                console.log('error fetching convo, not adding to list')
+                return null;
+              }
+
+              const title = `Conversation ${convoID.split("-")[1]} - ${new Date(
+                JSON.parse(convo).time
+              ).toLocaleString()}`;
+              if (convoID === currentConvo) {
+                return (
+                  <option value={convoID} selected>
+                    {title}
+                  </option>
+                );
+              } else return <option value={convoID}>{title}</option>;
+            })}
+          </select>
+        </section>
         <section className='conversation'>
           {messages.map((message, i) => {
             if (message.content?.type === "error") {
@@ -273,7 +333,7 @@ const App = () => {
         <p>
           Built by <a href='https://piemadd.com/'>Piero</a> in Chicago
         </p>
-        <p>Not an AI v1.2.0</p>
+        <p>Not an AI v1.3.0</p>
       </footer>
     </>
   );
