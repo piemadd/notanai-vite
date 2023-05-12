@@ -203,7 +203,7 @@ const App = () => {
                 return null;
               }
 
-              const title = `Conversation ${convoID.split("-")[1]} - ${new Date(
+              const title = `${convoID.split("-")[2]} - ${new Date(
                 JSON.parse(convo).time
               ).toLocaleString()}`;
               if (convoID === currentConvo) {
@@ -340,7 +340,7 @@ const App = () => {
         <p>
           Built by <a href='https://piemadd.com/'>Piero</a> in Chicago
         </p>
-        <p>Not an AI v1.3.1</p>
+        <p>Not an AI v1.3.2</p>
       </footer>
     </>
   );
