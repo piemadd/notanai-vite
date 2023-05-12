@@ -132,8 +132,13 @@ p {
   cursor: pointer;
 }
 
-.input button:hover {
+.input button:hover:not(:disabled) {
   background-color: #4e4e4e;
+}
+
+/* make disabled button unusable */
+.input button:disabled {
+  cursor: not-allowed;
 }
 
 .conversation {

@@ -61,7 +61,9 @@ const App = () => {
         //saving the state of this conversation to local storage for later use
 
         if (currentConvo !== null) {
-          console.log('current conversation is not null, telling server to fuck off')
+          console.log(
+            "current conversation is not null, telling server to fuck off"
+          );
           sendJsonMessage({
             type: "uuid",
             data: currentConvo.split("-")[1],
@@ -116,6 +118,7 @@ const App = () => {
     });
 
     turnstileRef.current?.reset();
+    setCFToken("");
     setTextBox("");
   };
 
@@ -175,12 +178,11 @@ const App = () => {
                   type: "uuid",
                   data: newConvoID.split("-")[1],
                 });
-              
+
                 //removing initial convo from list of previous convos
                 setPrevConversations((prev) => {
                   return prev.filter((convo) => convo !== initialConvo);
                 });
-              
               }
             }}
           >
@@ -188,13 +190,16 @@ const App = () => {
               let convo = localStorage.getItem(convoID);
 
               if (convoID === initialConvo) {
-                localStorage.setItem(convoID, JSON.stringify({ messages, time: Date.now() }))
+                localStorage.setItem(
+                  convoID,
+                  JSON.stringify({ messages, time: Date.now() })
+                );
                 convo = localStorage.getItem(convoID);
               }
 
               if (!convo) {
                 console.log(convoID, initialConvo);
-                console.log('error fetching convo, not adding to list')
+                console.log("error fetching convo, not adding to list");
                 return null;
               }
 
@@ -316,6 +321,8 @@ const App = () => {
               console.log("clicked submit");
               handleMessage(textBox);
             }}
+            {...(textBox.length === 0 && { disabled: true })}
+            {...(cfToken.length === 0 && { disabled: true })}
           >
             Send
           </button>
