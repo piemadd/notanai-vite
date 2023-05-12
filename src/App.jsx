@@ -131,11 +131,11 @@ const App = () => {
 
   const lastExample = useMemo(() => {
     const examples = [
-      "She Ashland on my Avenue till I Irving Park Road",
-      "Why did my wife leave me?",
-      "What is the meaning of life?",
-      "What is a fortnite?",
-      "Thoughts on EMD?",
+      `"She Ashland on my Avenue till I Irving Park Road"`,
+      `"Why did my wife leave me?"`,
+      `"What is the meaning of life?"`,
+      `"What is a fortnite?"`,
+      `"Thoughts on EMD?"`,
     ];
 
     return examples[Math.floor(Math.random() * examples.length)];
