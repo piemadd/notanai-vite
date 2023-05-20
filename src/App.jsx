@@ -164,6 +164,30 @@ const App = () => {
     <>
       <section className='title'>
         <h1>Not an AI</h1>
+        <p>
+          Unfortunately, Not an AI has been taken offline due to low user
+          numbers and server instability. I plan on bringing the service back
+          one day, but I honestly don't know when that will be. Thank you all
+          for participating in this experiment. I hope to see you soon.
+        </p>
+        <p>- Piero</p>
+      </section>
+      <footer>
+        <p>
+          <a href='/privacy.html'>Privacy Policy</a>
+        </p>
+        <p>
+          Built by <a href='https://piemadd.com/'>Piero</a> in Chicago
+        </p>
+        <p>Not an AI v1.3.7</p>
+      </footer>
+    </>
+  );
+
+  return (
+    <>
+      <section className='title'>
+        <h1>Not an AI</h1>
         <p>Have a funny interaction? Share it!</p>
       </section>
       {showPopup && (
