@@ -1,7 +1,8 @@
-import { useState, useRef, useMemo } from "react";
+import { useState, useRef, useMemo, useEffect } from "react";
 import { Turnstile } from "@marsidev/react-turnstile";
 import useWebSocket from "react-use-websocket";
 import ReactMarkdown from "react-markdown";
+import { socket } from "./socket";
 
 const App = () => {
   const [messages, setMessages] = useState([]);
@@ -37,23 +38,39 @@ const App = () => {
     setTextBox(e.target.innerText.replaceAll('"', ""));
   };
 
-  const { sendJsonMessage } = useWebSocket("wss://api.notanai.co", {
-    onOpen: () => {
+  useEffect(() => {
+    // on connect
+    const onConnect = () => {
       console.log("opened");
+      console.log("Clearing messages after socket open");
       setMessages([]);
-    },
-    onMessage: (e) => {
-      const messageContent = JSON.parse(e.data);
+    };
+
+    // on yeet
+    const onDisconnect = () => {
+      console.log("RIP :c");
+    };
+
+    // on message
+    const onMessage = (e) => {
+      const messageContent = JSON.parse(e);
       console.log("message received:", messageContent);
 
       if (
         messageContent.type === "message" ||
-        messageContent.type === "error"
+        messageContent.type === "error" ||
+        messageContent.type === "attachment"
       ) {
         //adding message to state and saving to local storage
         gtag("event", "server_message");
 
+        console.log(messages);
+
         const prev = [...messages];
+        console.log("Saving messages after new ai message");
+
+        console.log(currentConvo);
+
         localStorage.setItem(
           currentConvo,
           JSON.stringify({
@@ -61,6 +78,8 @@ const App = () => {
             time: Date.now(),
           })
         );
+
+        console.log("Setting messages after new ai message");
         setMessages([...prev, { type: "ai", content: messageContent }]);
       } else if (messageContent.type === "uuid") {
         console.log("new uuid");
@@ -70,10 +89,13 @@ const App = () => {
           console.log(
             "current conversation is not null, telling server to fuck off"
           );
-          sendJsonMessage({
-            type: "uuid",
-            data: currentConvo.split("-")[1],
-          });
+          socket.emit(
+            "message",
+            JSON.stringify({
+              type: "uuid",
+              data: currentConvo.split("-")[1],
+            })
+          );
         } else {
           console.log(`new uuid conversation-${messageContent.data}`);
 
@@ -81,8 +103,15 @@ const App = () => {
             ...prev,
             `conversation-${messageContent.data}`,
           ]);
+
+          console.log(
+            "Setting current convo to that contained in:",
+            messageContent
+          );
+
           setCurrentConvo(`conversation-${messageContent.data}`);
           setInitialConvo(`conversation-${messageContent.data}`);
+          console.log("Saving messages after new error");
           localStorage.setItem(
             `conversation-${messageContent.data}`,
             JSON.stringify({
@@ -94,9 +123,18 @@ const App = () => {
           );
         }
       }
-    },
-    shouldReconnect: (closeEvent) => true,
-  });
+    };
+
+    socket.on("connect", onConnect);
+    socket.on("disconnect", onDisconnect);
+    socket.on("message", onMessage);
+
+    return () => {
+      socket.off("connect", onConnect);
+      socket.off("disconnect", onDisconnect);
+      socket.off("message", onMessage);
+    };
+  }, [currentConvo, messages]);
 
   const handleTurnstile = (token) => {
     console.log("new turnstile token");
@@ -108,7 +146,9 @@ const App = () => {
       return;
     }
 
+    console.log("Setting messages after message handle");
     setMessages((prev) => {
+      console.log("Saving messages after message handle");
       localStorage.setItem(
         currentConvo,
         JSON.stringify({
@@ -136,10 +176,14 @@ const App = () => {
         },
       ];
     });
-    sendJsonMessage({
-      content: message,
-      token: cfToken,
-    });
+
+    socket.emit(
+      "message",
+      JSON.stringify({
+        content: message,
+        token: cfToken,
+      })
+    );
 
     gtag("event", "client_message");
 
@@ -159,30 +203,6 @@ const App = () => {
 
     return examples[Math.floor(Math.random() * examples.length)];
   }, []);
-
-  return (
-    <>
-      <section className='title'>
-        <h1>Not an AI</h1>
-        <p>
-          Unfortunately, Not an AI has been taken offline due to low user
-          numbers and server instability. I plan on bringing the service back
-          one day, but I honestly don't know when that will be. Thank you all
-          for participating in this experiment. I hope to see you soon.
-        </p>
-        <p>- Piero</p>
-      </section>
-      <footer>
-        <p>
-          <a href='/privacy.html'>Privacy Policy</a>
-        </p>
-        <p>
-          Built by <a href='https://piemadd.com/'>Piero</a> in Chicago
-        </p>
-        <p>Not an AI v1.3.7</p>
-      </footer>
-    </>
-  );
 
   return (
     <>
@@ -211,7 +231,7 @@ const App = () => {
           <p>
             <a href='/privacy.html'>Privacy Policy</a>
           </p>
-          <p>Not an AI v1.3.6</p>
+          <p>Not an AI v2.0.0</p>
         </div>
       )}
 
@@ -229,22 +249,29 @@ const App = () => {
           <select
             onChange={(e) => {
               const newConvoID = e.target.selectedOptions[0].value;
+
+              console.log("Setting current convo from list");
+              console.log(newConvoID);
+
               setCurrentConvo(newConvoID);
               console.log("fetching previous messages");
 
               if (localStorage.getItem(newConvoID)) {
                 console.log("previous messages found!");
-                console.log(localStorage.getItem(newConvoID));
+                console.log(JSON.parse(localStorage.getItem(newConvoID)));
                 const prevMessages = JSON.parse(
                   localStorage.getItem(newConvoID)
                 ).messages;
                 console.log(prevMessages);
                 setMessages(prevMessages);
 
-                sendJsonMessage({
-                  type: "uuid",
-                  data: newConvoID.split("-")[1],
-                });
+                socket.emit(
+                  "message",
+                  JSON.stringify({
+                    type: "uuid",
+                    data: newConvoID.split("-")[1],
+                  })
+                );
 
                 //removing initial convo from list of previous convos
                 setPrevConversations((prev) => {
@@ -257,6 +284,7 @@ const App = () => {
               let convo = localStorage.getItem(convoID);
 
               if (convoID === initialConvo) {
+                console.log("Adding initial convo to local storage");
                 localStorage.setItem(
                   convoID,
                   JSON.stringify({
@@ -293,14 +321,20 @@ const App = () => {
               setPrevConversations((prev) => {
                 return prev.filter((convo) => convo !== currentConvo);
               });
+              console.log("Deleting current convo");
               setCurrentConvo(initialConvo);
+
+              console.log("Clearing messages after thread delete");
               setMessages([]);
               window.location.reload();
 
-              sendJsonMessage({
-                type: "message",
-                data: "Thread Deleted on Client Side, riperonis",
-              });
+              socket.emit(
+                "message",
+                JSON.stringify({
+                  type: "message",
+                  data: "Thread Deleted on Client Side, riperonis",
+                })
+              );
             }}
           >
             Delete
@@ -330,11 +364,12 @@ const App = () => {
                 </ReactMarkdown>
               );
             } else if (message.content?.type === "attachment") {
-              if (
-                ["png", "jpg", "jpeg", "gif"].includes(
-                  message.content?.data.split(".").pop()
-                )
-              ) {
+              const attachmentEnding = message.content?.data
+                .split("?")[0]
+                .split(".").pop();
+              console.log("attachment ending", attachmentEnding);
+
+              if (["png", "jpg", "jpeg", "gif"].includes(attachmentEnding)) {
                 return (
                   <img
                     key={i}
