@@ -231,7 +231,7 @@ const App = () => {
           <p>
             <a href='/privacy.html'>Privacy Policy</a>
           </p>
-          <p>Not an AI v2.0.1</p>
+          <p>Not an AI v2.0.2</p>
         </div>
       )}
 
@@ -305,7 +305,12 @@ const App = () => {
 
               const title = `${convoID.split("-")[2]} - ${new Date(
                 JSON.parse(convo).time
-              ).toLocaleString()}`;
+              ).toLocaleString([], {
+                month: "2-digit",
+                day: "2-digit",
+                hour: "2-digit",
+                minute: "2-digit",
+              })}`;
               if (convoID === currentConvo) {
                 return (
                   <option value={convoID} selected>
@@ -366,7 +371,8 @@ const App = () => {
             } else if (message.content?.type === "attachment") {
               const attachmentEnding = message.content?.data
                 .split("?")[0]
-                .split(".").pop();
+                .split(".")
+                .pop();
               console.log("attachment ending", attachmentEnding);
 
               if (["png", "jpg", "jpeg", "gif"].includes(attachmentEnding)) {
@@ -466,7 +472,7 @@ const App = () => {
         <p>
           Built by <a href='https://piemadd.com/'>Piero</a> in Chicago
         </p>
-        <p>Not an AI v2.0.1</p>
+        <p>Not an AI v2.0.2</p>
       </footer>
     </>
   );
