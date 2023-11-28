@@ -231,7 +231,7 @@ const App = () => {
           <p>
             <a href='/privacy.html'>Privacy Policy</a>
           </p>
-          <p>Not an AI v2.0.0</p>
+          <p>Not an AI v2.0.1</p>
         </div>
       )}
 
@@ -466,7 +466,7 @@ const App = () => {
         <p>
           Built by <a href='https://piemadd.com/'>Piero</a> in Chicago
         </p>
-        <p>Not an AI v1.3.6</p>
+        <p>Not an AI v2.0.1</p>
       </footer>
     </>
   );
